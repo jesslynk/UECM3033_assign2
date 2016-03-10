@@ -14,24 +14,25 @@ The reports, codes and supporting documents are to be uploaded to Github at:
 
 Explain your selection criteria here.
 
-If the matrix is sparse matrix, then we use SOR method. 
-Sparse matrix is a matrix which the most elements are zero. 
-The condition i set for deciding whether use LU or SOR by comparing the number of nonzero elements in matrix A with the half of the length of matrix A. 
-If the nonzero element in matrix A is more than half of total elements in matrix A, it mean matrix A have large number of nonzero compared to zero. 
-So if the condition is true, it will perform LU factorization, else it will perform SOR method. 
-The number of nonzero element is counted by using numpy function,count_nonzero. 
-The length of A is use len.
+First, we check if the matrix is diagonally dominant matrix, then we use LU method. If not, we continue to check if the matrix is positive definite, if so we solve it by SOR and if not, we use LU method. This is because when matrix is positive definite, we can find an optimum omega in the range (0,2) for SOR method and it will converge to the solution.
 
 Explain how you implement your `task1.py` here.
 
-In self-defined fucntion named lu, decompose the LU sand solve the LU using for.
-To perform SOR method, set a iteration limit as 10 and initiate omega as 1.03. 
-In self-defined fucntion named sor, let x be zero matrix which is same size as matrix b.
+In self-defined function named lu, factorize the matrix and solve the LU using scipy.linalg.lu_factor and scipy.linalg.lu_solve.
 
-Use np.array to make the A and b to be a matrix. astype float is used to convert to float. 
-Assign the variables sol=np.linalg.solve(A,b) 
-Then solve the Ax=b by using LU if the condition is true ,else use SOR. 
-Display the sol.
+In self-defined function named sor, optimal w is found using the formula w = 2*(1-np.sqrt(1-(SR**2)))/(SR**2). If matrix A is positive definite, then optimal w will be found in the range of {0,2} which will give a quick convergence rate. 
+
+To check the answer, the formula Ax=b is used by multiply the solution matrix with A and see whether the result is approximated to b.
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -51,31 +52,50 @@ Put here your picture file (neko.jpg)
 
 
 How many non zero element in Sigma?
-There are 800 non zero elements for the three colours. All the elements are non zero.
-
-Put here your lower and better resolution pictures. Explain how you generate
-these pictures from `task2.py`.
+There are 800 non zero elements for the three colors. All the elements are non zero.
 
 
 
 
 
 
-First, create a self defined function named svd. Read the "neko.jpg" image and assiged to img. 
-Then, compute the U, Sigma and V for for each of the red, green and blue matrices. 
-Next, count the number of non zero elements in Sigma for red,green and blue colours respectively using the len function.
 
-The following steps are in the built-in function,svd. 
-Create a new Sigma matrix by copying the each of original Sigma and keep the first n nonzero elememts while set all other none zero elements to zero by using numpy function zeros_like. 
+
+
+
+
+
+Put here your lower and better resolution pictures. 
+
+Lower resolution picture (lowerneko.png):
+
+
+Better resolution picture (betterneko.png):
+
+
+
+
+
+
+
+
+Explain how you generate these pictures from `task2.py`.
+
+
+First, read the "neko.jpg" image and assigned to img. 
+Then, compute the U, Sigma and V for each of the red, green and blue matrices using linalg.svd decomposition. 
+Next, count the number of non zero elements in Sigma for red, green and blue colors respectively using the len function.
+
+Create a new Sigma matrix by copying the each of original Sigma and keep the first n nonzero elements while set all other none zero elements to zero by using numpy function zeros_like. 
 To construct a lower resolution matrix, change the dimension of Sigma to 30 by using indexing function like [0:30].
-In order to use dot multiplication for new matrix,so the new matrix will be U*Sigma*V which is dimension of (800,1000). 
+In order to use dot multiplication for new matrix, so the new matrix will be U*Sigma*V which is dimension of (800,1000). 
 Then, create and display the new resolution images.
 Repeat the same process by changing the resolution picture to 200.
 
 What is a sparse matrix?
 A sparse matrix is a matrix that allows special techniques to take advantage of the large number of "background" (commonly zero) elements.
-A sparse matrix is also a matrix with the most of the elememts are zero, meaning it has larger number of zero values compared to nonzero. 
-In contrast,a matrix where many elements are nonzero is called dense, as the Sigma matrix we had in task 2.
+A sparse matrix is also a matrix with the most of the elements are zero, meaning it has larger number of zero values compared to nonzero. 
+When we compress the picture into lower resolution, the matrix will have more zeros and hence becoming a sparse matrix. Naturally, it is easier to be compressed and it requires less storage.
 
 -----------------------------------
 

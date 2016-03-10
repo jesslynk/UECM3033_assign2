@@ -1,72 +1,92 @@
 import numpy as np
-ITERATION_LIMIT = 10
+import scipy.linalg as sp
 #Your optional code here
 #You can import some modules or create additional functions
 
 def lu(A, b):
-    sol = []
-    n = len(A)
-    for k in range(0,n-1):
-        for i in range(k+1,n):
-            if A[i,k] != 0.0:
-                lam= A[(i,k)]/A[(k,k)]
-                A[i, k+1:n] = A[i, k+1:n] - lam * A[k, k+1:n]
-                A[i,k] = lam
-    return A
-            
-    for k in range(1,n):
-        b[k] = b[k] - np.dot(A[k,0:k], b[0:k])
-    b[n-1]=b[n-1]/A[n-1, n-1]
-    for k in range(n-2, -1, -1):
-        b[k] = (b[k] - np.dot(A[k,k+1:n], b[k+1:n]))/A[k,k]
-    return b            
-    
+    x = sp.lu_factor(A,False,True)
+    sol = sp.lu_solve(x,b,0,False,True)
     return list(sol)
-
-
+    
 def sor(A, b):
     sol = []
-    omega = 1.03
-#     Edit here to implement your code   
-    
-    x = np.zeros_like(b)
-    for itr in range(ITERATION_LIMIT):
-        for i in range(len(b)):
-            sums = np.dot( A[i,:], x )
-            x[i] = x[i] + omega*(b[i]-sums)/A[i,i]
+    A = np.asarray(A)
+    b = np.asarray(b)
+
+    #A = D-L-U 
+    #Compute matrix D     
+    D = np.zeros([len(A),len(A.T)])
+    for i in range(len(A)):
+        D[i][i] = A[i][i]
         
+    #Compute matrix L
+    L = np.zeros([len(A),len(A.T)])
+    for i in range (len(A)):
+        for j in range (0,i):
+            L[i][j] = -A[i][j]
+    
+    #Compute matrix U      
+    U = np.zeros([len(A),len(A.T)])
+    for i in range (len(A)):
+       for j in range(i+1, len(A)):
+            U[i][j] = -A[i][j]
+            
+    #Calculate matrix Kj
+    Kj = np.dot(sp.inv(D),(L+U))
+    SR = max(sp.eigvals(Kj))     # Spectral Radius
+    w = 2*(1-np.sqrt(1-(SR**2)))/(SR**2)  # Calculate optimal omega
+    
+    Q = np.zeros([len(A),len(A.T)])
+    for i in range (0, len(A)):
+        for j in range (0, len(A)):
+            Q[i][j] = (1/w)*(D[i][j] - w*L[i][j])    
+            
+    X = b
+    for i in range(20):
+        X = np.dot(sp.inv(Q),np.dot((Q-A),X)) + np.dot(sp.inv(Q),b)
+        print("Iteration %1d: " %(i+1), X)
+        
+    sol = X 
     return list(sol)
 
 def solve(A, b):
-    condition = np.count_nonzero(A) > 1/2 *len(A)    # State and implement your condition here
+    A = np.asarray(A)
+    b = np.asarray(b)
+    
+    #check if the eigen values of matrix are positive
+    eigenvalue_pos = np.all(np.linalg.eigvals(A) > 0)
+    
+    #check if it is symmetry
+    symmetry = (A.T == A).all()
+    
+    #check if the matrix are positive definite
+    check = (eigenvalue_pos and symmetry)    
+    
+    condition = not(check) # State and implement your condition here
     if condition:
         print('Solve by lu(A,b)')
-        
         return lu(A,b)
     else:
-        print('Solve by sor(A,b)') 
-        
+        print('Solve by sor(A,b)')
         return sor(A,b)
 
 if __name__ == "__main__":
-    ## import checker
-    ## checker.test(lu, sor, solve)
-
-    A = np.array([[2,1,6], [8,3,2], [1,5,1]]).astype(float)
-    b = np.array([9, 13, 7]).astype(float)
+    ##import checker
+    ##checker.test(lu, sor, solve)
     
-    sol = np.linalg.solve(A,b)
-    solve(A,b)
+    A = [[2,1,6], [8,3,2], [1,5,1]]
+    b = [9, 13, 7]
+
+    sol = solve(A,b)
     print(sol)
     
-    A = np.array([[6566, -5202, -4040, -5224, 1420, 6229],
+    A = [[6566, -5202, -4040, -5224, 1420, 6229],
          [4104, 7449, -2518, -4588,-8841, 4040],
          [5266,-4008,6803, -4702, 1240, 5060],
          [-9306, 7213,5723, 7961, -1981,-8834],
          [-3782, 3840, 2464, -8389, 9781,-3334],
-         [-6903, 5610, 4306, 5548, -1380, 3539.]]).astype(float)
-    b = np.array([ 17603,  -63286,   56563,  -26523.5, 103396.5, -27906]).astype(float)
-       
-    sol = np.linalg.solve(A,b)
-    solve(A,b)
+         [-6903, 5610, 4306, 5548, -1380, 3539.]]
+    b = [17603,  -63286,   56563,  -26523.5, 103396.5, -27906]
+    
+    sol = solve(A,b)
     print(sol)
